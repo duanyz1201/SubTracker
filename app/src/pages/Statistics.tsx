@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, PieChart, TrendingUp, DollarSign } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,7 +22,22 @@ export function Statistics() {
   const [currency, setCurrency] = useState<'CNY' | 'USD'>('CNY');
   const { services, categories, settings } = useAppStore();
 
-  // Calculate monthly expenses
+  // 当日 key（YYYY-MM），用于 monthlyData 依赖，跨天后重新计算“近 6 个月”
+  const [todayMonthKey, setTodayMonthKey] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+  useEffect(() => {
+    const check = () => {
+      const d = new Date();
+      const next = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      setTodayMonthKey((prev) => (next !== prev ? next : prev));
+    };
+    const id = setInterval(check, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Calculate monthly expenses（依赖 todayMonthKey，跨月后“近 6 个月”会更新）
   const monthlyData = useMemo(() => {
     const data: Record<string, { CNY: number; USD: number }> = {};
     const today = new Date();
@@ -64,7 +79,7 @@ export function Statistics() {
         CNY: Math.round(values.CNY * 100) / 100,
         USD: Math.round(values.USD * 100) / 100,
       }));
-  }, [services]);
+  }, [services, todayMonthKey]);
 
   // Calculate category expenses
   const categoryData = useMemo(() => {
