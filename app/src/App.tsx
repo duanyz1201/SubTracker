@@ -8,6 +8,7 @@ import { Calendar } from '@/pages/Calendar';
 import { Statistics } from '@/pages/Statistics';
 import { Categories } from '@/pages/Categories';
 import { Settings } from '@/pages/Settings';
+import { AddServiceDialog } from '@/components/AddServiceDialog';
 import { useAppStore } from '@/store';
 import { useApi, getToken, setToken } from '@/lib/api';
 import { api } from '@/lib/api';
@@ -25,6 +26,7 @@ const pageTitles: Record<string, string> = {
 
 function App() {
   const [currentPath, setCurrentPath] = useState('/');
+  const [addServiceOpen, setAddServiceOpen] = useState(false);
   const { isAuthenticated, setUser, setAuth, loadFromApi } = useAppStore();
   const [authChecked, setAuthChecked] = useState(!useApi());
 
@@ -46,6 +48,11 @@ function App() {
       .catch(() => setToken(null))
       .finally(() => setAuthChecked(true));
   }, [authChecked, loadFromApi, setAuth, setUser]);
+
+  // 离开服务列表时关闭添加服务弹窗
+  useEffect(() => {
+    if (currentPath !== '/services') setAddServiceOpen(false);
+  }, [currentPath]);
 
   // Handle navigation
   const navigate = (path: string) => {
@@ -151,14 +158,13 @@ function App() {
         currentPath={currentPath}
         onNavigate={navigate}
         title={pageTitles[currentPath] || 'SubTracker'}
-        onAddService={
-          currentPath === '/services'
-            ? () => toast.info('添加服务功能开发中')
-            : undefined
-        }
+        onAddService={currentPath === '/services' ? () => setAddServiceOpen(true) : undefined}
       >
         {renderPage()}
       </MainLayout>
+      {currentPath === '/services' && (
+        <AddServiceDialog open={addServiceOpen} onOpenChange={setAddServiceOpen} />
+      )}
       <Toaster position="top-right" richColors />
     </>
   );

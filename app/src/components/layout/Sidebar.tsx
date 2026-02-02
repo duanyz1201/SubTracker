@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -34,10 +33,11 @@ const navItems: NavItem[] = [
 interface SidebarProps {
   currentPath: string;
   onNavigate: (path: string) => void;
+  isCollapsed: boolean;
+  onToggleCollapsed: () => void;
 }
 
-export function Sidebar({ currentPath, onNavigate }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+export function Sidebar({ currentPath, onNavigate, isCollapsed, onToggleCollapsed }: SidebarProps) {
   const { user, logout, getExpiringServices } = useAppStore();
 
   const expiringCount = getExpiringServices(7).length;
@@ -49,29 +49,23 @@ export function Sidebar({ currentPath, onNavigate }: SidebarProps) {
 
   return (
     <motion.aside
-      initial={{ x: -240 }}
-      animate={{ x: 0, width: isCollapsed ? 72 : 240 }}
+      initial={false}
+      animate={{ width: isCollapsed ? 72 : 240 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       className="fixed left-0 top-0 h-screen bg-slate-900 text-white flex flex-col z-50"
     >
-      {/* Logo */}
-      <div className="h-16 flex items-center px-4 border-b border-slate-800/50">
-        <motion.div
-          className="flex items-center gap-3"
-          animate={{ opacity: isCollapsed ? 0 : 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/25">
-            <LayoutDashboard className="w-5 h-5 text-white" />
-          </div>
-          {!isCollapsed && (
-            <span className="font-bold text-lg whitespace-nowrap tracking-tight">SubTracker</span>
-          )}
-        </motion.div>
-        {isCollapsed && (
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mx-auto shadow-lg shadow-indigo-500/25">
-            <LayoutDashboard className="w-5 h-5 text-white" />
-          </div>
+      {/* Logo：收起时只显示一个居中图标，展开时图标+文字 */}
+      <div
+        className={cn(
+          'h-16 flex items-center border-b border-slate-800/50 shrink-0',
+          isCollapsed ? 'justify-center px-0' : 'px-4 gap-3'
+        )}
+      >
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/25">
+          <LayoutDashboard className="w-5 h-5 text-white" />
+        </div>
+        {!isCollapsed && (
+          <span className="font-bold text-lg whitespace-nowrap tracking-tight">SubTracker</span>
         )}
       </div>
 
@@ -199,7 +193,7 @@ export function Sidebar({ currentPath, onNavigate }: SidebarProps) {
 
       {/* Collapse Button */}
       <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
+        onClick={onToggleCollapsed}
         className="absolute -right-3 top-20 w-6 h-6 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all"
       >
         {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}

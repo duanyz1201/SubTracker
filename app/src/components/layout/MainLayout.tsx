@@ -12,10 +12,13 @@ interface MainLayoutProps {
   onAddService?: () => void;
 }
 
+const SIDEBAR_WIDTH = 240;
+const SIDEBAR_COLLAPSED_WIDTH = 72;
+
 export function MainLayout({ children, currentPath, onNavigate, title, onAddService }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // 监听侧边栏折叠状态
+  // 监听窗口缩小自动收起侧边栏
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
@@ -29,15 +32,18 @@ export function MainLayout({ children, currentPath, onNavigate, title, onAddServ
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Sidebar */}
-      <Sidebar currentPath={currentPath} onNavigate={onNavigate} />
+      {/* Sidebar：折叠状态由 MainLayout 控制，与主内容区 margin 一致 */}
+      <Sidebar
+        currentPath={currentPath}
+        onNavigate={onNavigate}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapsed={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
 
-      {/* Main Content */}
+      {/* Main Content：左边距与侧边栏宽度一致，避免空白 */}
       <div
-        className={cn(
-          'flex flex-col min-h-screen transition-all duration-300',
-          sidebarCollapsed ? 'ml-20' : 'ml-60'
-        )}
+        className="flex flex-col min-h-screen transition-all duration-300"
+        style={{ marginLeft: sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH }}
       >
         {/* Top Bar */}
         <TopBar

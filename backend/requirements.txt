@@ -8,9 +8,10 @@ sqlalchemy>=2.0.0
 psycopg2-binary>=2.9.9
 alembic>=1.13.0
 
-# Auth
+# Auth（bcrypt 4.1+ 与 passlib 不兼容，需固定 <4.1）
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.1,<4.1
 
 # Scheduler & HTTP
 apscheduler>=3.10.0

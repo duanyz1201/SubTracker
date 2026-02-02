@@ -40,6 +40,7 @@ import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store';
 import type { Service, ServiceStatus } from '@/types';
 import { toast } from 'sonner';
+import { EditServiceDialog } from '@/components/EditServiceDialog';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -53,6 +54,7 @@ export function Services() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
+  const [editingService, setEditingService] = useState<Service | null>(null);
 
   // Filter and sort services
   const filteredServices = useMemo(() => {
@@ -332,7 +334,7 @@ export function Services() {
                               <RefreshCw className="mr-2 h-4 w-4" />
                               续费
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setEditingService(service)}>
                               <Edit className="mr-2 h-4 w-4" />
                               编辑
                             </DropdownMenuItem>
@@ -399,6 +401,13 @@ export function Services() {
           </div>
         )}
       </motion.div>
+
+      {/* Edit Service Dialog */}
+      <EditServiceDialog
+        open={!!editingService}
+        onOpenChange={(open) => !open && setEditingService(null)}
+        service={editingService}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
