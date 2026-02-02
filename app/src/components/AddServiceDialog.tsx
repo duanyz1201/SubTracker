@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,6 +51,23 @@ export function AddServiceDialog({ open, onOpenChange }: AddServiceDialogProps) 
     expiryDate: nextMonthDate(),
     notes: '',
   });
+
+  // 每次打开弹窗时重置表单，避免沿用上次填写内容
+  useEffect(() => {
+    if (open) {
+      setForm({
+        name: '',
+        categoryId: categories[0]?.id ?? '',
+        provider: '',
+        cost: '',
+        currency: 'CNY',
+        billingCycle: 'monthly',
+        startDate: todayDate(),
+        expiryDate: nextMonthDate(),
+        notes: '',
+      });
+    }
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
