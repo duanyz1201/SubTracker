@@ -43,7 +43,9 @@ export function Statistics() {
     const today = new Date();
 
     services.forEach((service) => {
-      const startDate = service.startDate ? new Date(service.startDate) : new Date(service.expiryDate || today);
+      // 月度趋势必须用开始日期归入月份；无 startDate 时不参与月度统计，避免误用到期日导致归错月
+      if (!service.startDate) return;
+      const startDate = new Date(service.startDate);
       const t = startDate.getTime();
       if (Number.isNaN(t)) return; // 无效日期跳过
       const monthKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`;
