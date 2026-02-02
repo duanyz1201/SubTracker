@@ -37,42 +37,43 @@ export function Statistics() {
     return () => clearInterval(id);
   }, []);
 
-  // Calculate monthly expenses（依赖 todayMonthKey，跨月后“近 6 个月”会更新）
+  // 近 6 个月每月「在计费期内」的费用（按当月是否在 start～expiry 之间归集，不是按开始月）
   const monthlyData = useMemo(() => {
     const data: Record<string, { CNY: number; USD: number }> = {};
     const today = new Date();
 
+    // 先确定近 6 个月的 key 并初始化为 0
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      data[key] = { CNY: 0, USD: 0 };
+    }
+
     services.forEach((service) => {
-      // 月度趋势必须用开始日期归入月份；无 startDate 时不参与月度统计，避免误用到期日导致归错月
       if (!service.startDate) return;
       const startDate = new Date(service.startDate);
-      const t = startDate.getTime();
-      if (Number.isNaN(t)) return; // 无效日期跳过
-      const monthKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`;
-
-      if (!data[monthKey]) {
-        data[monthKey] = { CNY: 0, USD: 0 };
-      }
+      if (Number.isNaN(startDate.getTime())) return;
+      const expiryDate = service.expiryDate ? new Date(service.expiryDate) : null;
+      if (expiryDate && Number.isNaN(expiryDate.getTime())) return;
 
       let monthlyCost = Number(service.cost) || 0;
       if (service.billingCycle === 'yearly') monthlyCost /= 12;
       if (service.billingCycle === 'quarterly') monthlyCost /= 3;
 
-      if (service.currency === 'CNY') {
-        data[monthKey].CNY += monthlyCost;
-      } else {
-        data[monthKey].USD += monthlyCost;
+      // 对近 6 个月逐月判断：该月是否在订阅有效期内，是则计入当月
+      for (let i = 5; i >= 0; i--) {
+        const monthStart = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const monthEnd = new Date(today.getFullYear(), today.getMonth() - i + 1, 0);
+        const key = `${monthStart.getFullYear()}-${String(monthStart.getMonth() + 1).padStart(2, '0')}`;
+        const activeInMonth = startDate <= monthEnd && (!expiryDate || expiryDate >= monthStart);
+        if (!activeInMonth) continue;
+        if (service.currency === 'CNY') {
+          data[key].CNY += monthlyCost;
+        } else {
+          data[key].USD += monthlyCost;
+        }
       }
     });
-
-    // Fill in missing months with 0
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      if (!data[key]) {
-        data[key] = { CNY: 0, USD: 0 };
-      }
-    }
 
     return Object.entries(data)
       .sort(([a], [b]) => a.localeCompare(b))
