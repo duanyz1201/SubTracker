@@ -1,0 +1,70 @@
+# ========== 敏感 / 本地配置（切勿 push） ==========
+# 真实配置含密钥/数据库连接，只保留 .env.example 模板
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ========== 后端 Python ==========
+backend/venv/
+backend/.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+
+# ========== 前端 Node ==========
+app/node_modules/
+app/dist/
+app/.vite/
+*.local
+
+# 日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ========== 系统 / IDE ==========
+.DS_Store
+.DS_Store?
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE（按需保留：若希望团队共享编辑器配置可删掉下面几行）
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Claude / Cursor 等本地配置
+.claude/
+
+# ========== 其他 ==========
+*.log
+logs/
+.cache/
