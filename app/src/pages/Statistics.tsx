@@ -25,16 +25,19 @@ export function Statistics() {
   // Calculate monthly expenses
   const monthlyData = useMemo(() => {
     const data: Record<string, { CNY: number; USD: number }> = {};
+    const today = new Date();
 
     services.forEach((service) => {
-      const startDate = new Date(service.startDate);
+      const startDate = service.startDate ? new Date(service.startDate) : new Date(service.expiryDate || today);
+      const t = startDate.getTime();
+      if (Number.isNaN(t)) return; // 无效日期跳过
       const monthKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`;
 
       if (!data[monthKey]) {
         data[monthKey] = { CNY: 0, USD: 0 };
       }
 
-      let monthlyCost = service.cost;
+      let monthlyCost = Number(service.cost) || 0;
       if (service.billingCycle === 'yearly') monthlyCost /= 12;
       if (service.billingCycle === 'quarterly') monthlyCost /= 3;
 
@@ -46,7 +49,6 @@ export function Statistics() {
     });
 
     // Fill in missing months with 0
-    const today = new Date();
     for (let i = 5; i >= 0; i--) {
       const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -67,23 +69,24 @@ export function Statistics() {
   // Calculate category expenses
   const categoryData = useMemo(() => {
     const data: Record<string, { name: string; value: number; color: string }> = {};
+    const rate = Number(settings?.exchangeRate) || 7.2;
 
     categories.forEach((cat) => {
       data[cat.id] = { name: cat.name, value: 0, color: cat.color };
     });
 
     services.forEach((service) => {
-      if (data[service.categoryId]) {
-        let cost = service.cost;
+      if (service.categoryId && data[service.categoryId]) {
+        let cost = Number(service.cost) || 0;
         if (service.billingCycle === 'yearly') cost /= 12;
         if (service.billingCycle === 'quarterly') cost /= 3;
 
         if (service.currency === currency) {
           data[service.categoryId].value += cost;
         } else if (service.currency === 'CNY' && currency === 'USD') {
-          data[service.categoryId].value += cost / settings.exchangeRate;
+          data[service.categoryId].value += cost / rate;
         } else if (service.currency === 'USD' && currency === 'CNY') {
-          data[service.categoryId].value += cost * settings.exchangeRate;
+          data[service.categoryId].value += cost * rate;
         }
       }
     });
@@ -91,13 +94,13 @@ export function Statistics() {
     return Object.values(data)
       .filter((item) => item.value > 0)
       .map((item) => ({ ...item, value: Math.round(item.value * 100) / 100 }));
-  }, [services, categories, currency, settings.exchangeRate]);
+  }, [services, categories, currency, settings?.exchangeRate]);
 
-  // Calculate totals
+  // Calculate totals（API 可能返回 string/Decimal，统一转为 number）
   const totals = useMemo(() => {
     return services.reduce(
       (acc, service) => {
-        let cost = service.cost;
+        let cost = Number(service.cost) || 0;
         if (service.billingCycle === 'yearly') cost /= 12;
         if (service.billingCycle === 'quarterly') cost /= 3;
 
@@ -120,7 +123,7 @@ export function Statistics() {
           {payload.map((entry, index) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: {currency === 'CNY' ? '¥' : '$'}
-              {entry.value.toFixed(2)}
+              {(Number(entry.value) || 0).toFixed(2)}
             </p>
           ))}
         </div>
@@ -144,7 +147,7 @@ export function Statistics() {
             </div>
             <span className="text-sm text-gray-500">月度总费用 (CNY)</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">¥{totals.CNY.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-gray-900">¥{(Number(totals.CNY) || 0).toFixed(2)}</p>
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -154,7 +157,7 @@ export function Statistics() {
             </div>
             <span className="text-sm text-gray-500">月度总费用 (USD)</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">${totals.USD.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-gray-900">${(Number(totals.USD) || 0).toFixed(2)}</p>
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -165,7 +168,7 @@ export function Statistics() {
             <span className="text-sm text-gray-500">平均月费 (CNY)</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">
-            ¥{services.length > 0 ? (totals.CNY / services.length).toFixed(2) : '0.00'}
+            ¥{services.length > 0 ? ((Number(totals.CNY) || 0) / services.length).toFixed(2) : '0.00'}
           </p>
         </div>
       </motion.div>
@@ -259,7 +262,7 @@ export function Statistics() {
                 </Pie>
                 <Tooltip
                   formatter={(value: number) =>
-                    `${currency === 'CNY' ? '¥' : '$'}${value.toFixed(2)}`
+                    `${currency === 'CNY' ? '¥' : '$'}${(Number(value) || 0).toFixed(2)}`
                   }
                 />
                 <Legend
@@ -324,7 +327,7 @@ export function Statistics() {
                       <td className="px-4 py-3 text-right">
                         <span className="font-medium text-gray-900">
                           {currency === 'CNY' ? '¥' : '$'}
-                          {item.value.toFixed(2)}
+                          {(Number(item.value) || 0).toFixed(2)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -335,7 +338,7 @@ export function Statistics() {
                               style={{ width: `${percentage}%`, backgroundColor: item.color }}
                             />
                           </div>
-                          <span className="text-sm text-gray-500">{percentage.toFixed(1)}%</span>
+                          <span className="text-sm text-gray-500">{(Number(percentage) || 0).toFixed(1)}%</span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right">

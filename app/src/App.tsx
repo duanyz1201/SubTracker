@@ -25,7 +25,8 @@ const pageTitles: Record<string, string> = {
 };
 
 function App() {
-  const [currentPath, setCurrentPath] = useState('/');
+  // 与 URL 同步，支持直接打开 /statistics 等路径
+  const [currentPath, setCurrentPath] = useState(() => window.location.pathname || '/');
   const [addServiceOpen, setAddServiceOpen] = useState(false);
   const { isAuthenticated, setUser, setAuth, loadFromApi } = useAppStore();
   const [authChecked, setAuthChecked] = useState(!useApi());
